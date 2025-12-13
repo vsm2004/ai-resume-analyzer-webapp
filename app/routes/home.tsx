@@ -1,8 +1,10 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
 import NavBar from "~/components/NavBar";
 import type { Route } from "./+types/home";
 import { resumes } from "~/constants";
 import ResumeCard from "~/components/ResumeCard";
-import { resume } from "react-dom/server";
+import { usePuterStore } from "~/lib/puter";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -15,7 +17,35 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  const resumesList = Array.isArray(resumes) ? resumes : [];
+  const {
+    isLoading,
+    puterReady,
+    auth: { isAuthenticated },
+  } = usePuterStore();
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // 🔒 Wait until Puter finishes initializing
+    if (!puterReady || isLoading) return;
+
+    if (!isAuthenticated) {
+      navigate("/auth?next=/", { replace: true });
+    }
+  }, [puterReady, isLoading, isAuthenticated, navigate]);
+
+  // Prevent UI flash
+  if (!puterReady || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null; // redirect will happen
+  }
 
   return (
     <main className="bg-[url('/images/bg-main.svg')] bg-cover">
@@ -29,14 +59,12 @@ export default function Home() {
             chances of landing your dream job.
           </h2>
         </div>
-        {resume.length > 0 &&(
-        <div className="resume-section">
-          {resumesList.map((resume) => (
-        <ResumeCard key={resume.id} resume={resume} />
-      ))}
-      </div>
 
-      )}
+        <div className="resume-section">
+          {resumes.map((resume) => (
+            <ResumeCard key={resume.id} resume={resume} />
+          ))}
+        </div>
       </section>
     </main>
   );
