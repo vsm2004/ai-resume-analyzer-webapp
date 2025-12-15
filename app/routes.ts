@@ -9,4 +9,5 @@ export default [
 
   // Catch-all for malformed URLs
   route("*", "routes/catch-all.tsx"),
+  route("upload", "routes/upload.tsx"),
 ] satisfies RouteConfig;
